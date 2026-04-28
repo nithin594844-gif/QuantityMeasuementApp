@@ -11,78 +11,106 @@ public class QuantityMeasurementApp {
         public double toBase(double value) {
             return value * factor;
         }
-        public double fromBase(double baseValue) {
-            return baseValue / factor;
+        public double fromBase(double base) {
+            return base / factor;
+        }
+    }
+    enum WeightUnit {
+        MILLIGRAM(0.001),
+        GRAM(1.0),
+        KILOGRAM(1000.0),
+        POUND(453.592),
+        TONNE(1_000_000.0);
+        private final double factor;
+        WeightUnit(double factor) {
+            this.factor = factor;
+        }
+        public double toBase(double value) {
+            return value * factor;
+        }
+        public double fromBase(double base) {
+            return base / factor;
         }
     }
     static class Length {
         private double value;
         private LengthUnit unit;
         public Length(double value, LengthUnit unit) {
-            if (unit == null)
-                throw new IllegalArgumentException("Unit cannot be null");
             this.value = value;
             this.unit = unit;
         }
         private double toBase() {
             return unit.toBase(value);
         }
-        private double fromBase(double base, LengthUnit target) {
-            return target.fromBase(base);
-        }
-        public Length convertTo(LengthUnit targetUnit) {
+        public Length convertTo(LengthUnit target) {
             double base = toBase();
-            double result = fromBase(base, targetUnit);
-            return new Length(round(result), targetUnit);
+            return new Length(round(target.fromBase(base)), target);
         }
         public Length add(Length other) {
-            double sumBase = this.toBase() + other.toBase();
-            double result = fromBase(sumBase, this.unit);
-            return new Length(round(result), this.unit);
+            double sum = this.toBase() + other.toBase();
+            return new Length(round(unit.fromBase(sum)), unit);
         }
-        public Length add(Length other, LengthUnit targetUnit) {
-            double sumBase = this.toBase() + other.toBase();
-            double result = fromBase(sumBase, targetUnit);
-            return new Length(round(result), targetUnit);
+        public Length add(Length other, LengthUnit target) {
+            double sum = this.toBase() + other.toBase();
+            return new Length(round(target.fromBase(sum)), target);
         }
         @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null || getClass() != obj.getClass())
-                return false;
-            Length other = (Length) obj;
-            return Double.compare(this.toBase(), other.toBase()) == 0;
-        }
-        private double round(double val) {
-            return Math.round(val * 1000.0) / 1000.0;
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Length)) return false;
+            Length l = (Length) o;
+            return Double.compare(this.toBase(), l.toBase()) == 0;
         }
         @Override
         public String toString() {
             return "Quantity(" + value + ", " + unit + ")";
         }
     }
+    static class Weight {
+        private double value;
+        private WeightUnit unit;
+        public Weight(double value, WeightUnit unit) {
+            this.value = value;
+            this.unit = unit;
+        }
+        private double toBase() {
+            return unit.toBase(value);
+        }
+        public Weight convertTo(WeightUnit target) {
+            double base = toBase();
+            return new Weight(round(target.fromBase(base)), target);
+        }
+        public Weight add(Weight other) {
+            double sum = this.toBase() + other.toBase();
+            return new Weight(round(unit.fromBase(sum)), unit);
+        }
+        public Weight add(Weight other, WeightUnit target) {
+            double sum = this.toBase() + other.toBase();
+            return new Weight(round(target.fromBase(sum)), target);
+        }
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Weight)) return false;
+            Weight w = (Weight) o;
+            return Double.compare(this.toBase(), w.toBase()) == 0;
+        }
+        @Override
+        public String toString() {
+            return "Quantity(" + value + ", " + unit + ")";
+        }
+    }
+    static double round(double v) {
+        return Math.round(v * 1000.0) / 1000.0;
+    }
     public static void main(String[] args) {
-        System.out.println("\nInput: Quantity(1.0, FEET).convertTo(INCHES)");
-        System.out.println("Output: " + new Length(1.0, LengthUnit.FEET).convertTo(LengthUnit.INCHES));
-        System.out.println("\nInput: add(Quantity(1.0, FEET), Quantity(12.0, INCHES), FEET)");
-        System.out.println("Output: " + new Length(1.0, LengthUnit.FEET)
-                .add(new Length(12.0, LengthUnit.INCHES), LengthUnit.FEET));
-        System.out.println("\nInput: equals(36 INCHES, 1 YARD)");
-        System.out.println("Output: " + new Length(36.0, LengthUnit.INCHES)
-                .equals(new Length(1.0, LengthUnit.YARDS)));
-        System.out.println("\nInput: add(1 YARD, 3 FEET, YARDS)");
-        System.out.println("Output: " + new Length(1.0, LengthUnit.YARDS)
-                .add(new Length(3.0, LengthUnit.FEET), LengthUnit.YARDS));
-        System.out.println("\nInput: convert(2.54 CM → INCHES)");
-        System.out.println("Output: " + new Length(2.54, LengthUnit.CENTIMETERS)
-                .convertTo(LengthUnit.INCHES));
-        System.out.println("\nInput: add(5 FEET, 0 INCHES, FEET)");
-        System.out.println("Output: " + new Length(5.0, LengthUnit.FEET)
-                .add(new Length(0.0, LengthUnit.INCHES), LengthUnit.FEET));
-        System.out.println("\nInput: LengthUnit.FEET.toBase(1.0)");
-        System.out.println("Output: " + LengthUnit.FEET.toBase(1.0));
-        System.out.println("\nInput: LengthUnit.INCHES.fromBase(12.0)");
-        System.out.println("Output: " + LengthUnit.INCHES.fromBase(12.0));
+        System.out.println(new Length(1, LengthUnit.FEET).convertTo(LengthUnit.INCHES));
+        System.out.println(new Length(1, LengthUnit.FEET).add(new Length(12, LengthUnit.INCHES), LengthUnit.FEET));
+        System.out.println(new Length(36, LengthUnit.INCHES).equals(new Length(1, LengthUnit.YARDS)));
+        System.out.println(new Weight(1, WeightUnit.KILOGRAM).equals(new Weight(1000, WeightUnit.GRAM)));
+        System.out.println(new Weight(2, WeightUnit.POUND).convertTo(WeightUnit.KILOGRAM));
+        System.out.println(new Weight(500, WeightUnit.GRAM).add(new Weight(0.5, WeightUnit.KILOGRAM)));
+        System.out.println(new Weight(1, WeightUnit.KILOGRAM).add(new Weight(1000, WeightUnit.GRAM), WeightUnit.GRAM));
+        System.out.println("Weight vs Length comparison not allowed");
     }
 }
